@@ -14,6 +14,10 @@ from handler import remove_event_handler
 from handler import get_launch_events_handler
 from handler import get_join_events_handler
 from handler import user_event_manage_handler
+from handler import add_comment_handler
+from handler import remove_comment_handler
+from handler import get_comments_handler
+from handler import user_relation_manage_handler
 
 
 
@@ -32,7 +36,11 @@ def main():
       (r"/event/query_launch", get_launch_events_handler.Get_Launch_Events_Handler),
       (r"/event/query_join", get_join_events_handler.Get_Join_Events_Handler),
       (r"/user/event_manage", user_event_manage_handler.User_Event_Manage_Handler),     
-  
+      (r"/comment/add", add_comment_handler.Add_Comment_Handler),
+      (r"/comment/remove", remove_comment_handler.Remove_Comment_Handler),
+      (r"/comment/query", get_comments_handler.Get_Comments_Handler),
+      (r"/user/relation_manage", user_relation_manage_handler.User_Relation_Manage_Handler),      
+
     ])
   http_server = tornado.httpserver.HTTPServer(application)
   http_server.listen(port)

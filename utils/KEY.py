@@ -12,6 +12,7 @@ CHAT_TOKEN = 'chat_token'
 SALT = 'salt'
 
 # user
+USER_ID = 'user_id'
 NAME = 'name'
 NICKNAME = 'nickname'
 GENDER = 'gender'
@@ -39,4 +40,10 @@ FOLLOW_NUMBER = 'follow_number'
 SUPPORT_NUMBER = 'support_number'
 GROUP_PTS = 'group_pts'
 EVENT_LIST = 'event_list'
+
+# comment
+COMMENT_ID = 'comment_id'
+AUTHOR_ID = 'author_id'
+AUTHOR = 'author'
+COMMENT_LIST = 'comment_list'
 

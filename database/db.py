@@ -368,7 +368,8 @@ def get_event_information(data):
       user = {}
       user[KEY.ID] = event_info[KEY.LAUNCHER_ID]
       user = get_user_information(user)
-      event_info[KEY.LAUNCHER] = user[KEY.NICKNAME]
+      if user is not None:
+        event_info[KEY.LAUNCHER] = user[KEY.NICKNAME]
   except:
     pass
   finally:
@@ -387,7 +388,9 @@ def get_events(data, get_event_id_list):
   event_info = {}
   for event_id in event_id_list:
     event_info[KEY.EVENT_ID] = event_id
-    event_list.append(get_event_information(event_info))
+    event_info = get_event_information(event_info)
+    if event_info is not None:
+      event_list.append(event_info)
   return event_list
 
 
@@ -476,4 +479,149 @@ def user_event_manage(data):
   # trust and reputation compute here.
   #
   return True
+
+
+'''
+add a new comment to a help event.
+@params includes event_id, represents comment belongs to which event,
+                 author, user's id, author of comment,
+                 content, content of comment.
+@return new comment id if succeed,
+        -1 otherwise.
+'''
+def add_comment(data):
+  if KEY.ID not in data or KEY.EVENT_ID not in data:
+    return -1
+  if KEY.CONTENT not in data:
+    return -1
+  sql = "insert into comment (event_id, author, content, time) values (%d, %d, '%s', now())"
+  try:
+    comment_id = dbhelper.insert(sql%(data[KEY.EVENT_ID], data[KEY.ID], data[KEY.CONTENT]))
+    return comment_id
+  except:
+    return -1
+
+
+'''
+remove a comment from a help event by author him/her self.
+@params includes id, indicates author him/her self.
+                 event_id, indicates which event the comment belongs to.
+                 comment_id, indicates comment itself.
+@return True if delete successfully,
+        False if fails.
+'''
+def remove_comment(data):
+  if KEY.ID not in data or KEY.EVENT_ID not in data or KEY.COMMENT_ID not in data:
+    return False
+  sql = "delete from comment where id = %d and event_id = %d and author = %d"
+  try:
+    dbhelper.execute(sql%(data[KEY.COMMENT_ID], data[KEY.EVENT_ID], data[KEY.ID]))
+    return True
+  except:
+    return False
+
+
+'''
+get comments of a help event.
+@params event_id, id of the help event.
+@return a list of comments. each comment contain all detail information.
+'''
+def get_comments(data):
+  if KEY.EVENT_ID not in data:
+    return None
+  comment_list = []
+  comment = {}
+  sql = "select id from comment where event_id = %d order by time DESC"
+  try:
+    sql_result = dbhelper.execute_fetchall(sql%(data[KEY.EVENT_ID]))
+    for each_result in sql_result:
+      for each_id in each_result:
+        comment[KEY.COMMENT_ID] = each_id
+        comment = get_comment_info(comment)
+        if comment is not None:
+          comment_list.append(comment)
+    return comment_list
+  except:
+    return None
+
+
+'''
+get detail information of a comment.
+@params includes comment_id, id of comment.
+@return information of comment, includes id of comment,
+                                         event_id, indicates which event belongs to,
+                                         author_id, author's user id,
+                                         author, nickname of author,
+                                         content, main body of comment,
+                                         time, add time of comment.
+        None indicates a fail query. Maybe the chosen comment doesn't exist.
+'''
+def get_comment_info(data):
+  if KEY.COMMENT_ID not in data:
+    return None
+  sql = "select event_id, author, content, time from comment where id = %d"
+  comment_info = None
+  try:
+    sql_result = dbhelper.execute_fetchone(sql%(data[KEY.COMMENT_ID]))
+    if sql_result is not None:
+      comment_info = {}
+      comment_info[KEY.COMMENT_ID] = data[KEY.COMMENT_ID]
+      comment_info[KEY.EVENT_ID] = sql_result[0]
+      comment_info[KEY.AUTHOR_ID] = sql_result[1]
+      comment_info[KEY.CONTENT] = sql_result[2]
+      comment_info[KEY.TIME] = str(sql_result[3])
+      user = {}
+      user[KEY.ID] = comment_info[KEY.AUTHOR_ID]
+      user = get_user_information(user)
+      if user is not None:
+        comment_info[KEY.AUTHOR] = user[KEY.NICKNAME]
+  except:
+    pass
+  finally:
+    return comment_info
+
+
+'''
+add a static relation between two users. The relation is single direction.
+@params includes two users' id, one is called id, the other called user_id.
+parameter type indicates type of static relation. two users in one direction could only have one type of relation.
+                 type:  0 indicates family relation.
+                        1 indicates geography relation.
+                        2 indicates career, interest and general friend relation.
+@return True if successfully adds.
+        False otherwise.
+'''
+def add_static_relation(data):
+  if KEY.ID not in data or KEY.USER_ID not in data or KEY.TYPE not in data:
+    return False
+  sql = "replace into static_relation (user_a, user_b, type, time) values (%d, %d, %d, now())"
+  try:
+    n = dbhelper.execute(sql%(data[KEY.ID], data[KEY.USER_ID], data[KEY.TYPE]))
+    if n > 0:
+      return True
+    else:
+      return False
+  except:
+    return False
+
+
+'''
+remove a static relation of two user.
+@params includes two users' id, one is called id, the other called user_id.
+@return True if successfully removes.
+        False otherwise.
+'''
+def remove_static_relation(data):
+  if KEY.ID not in data or KEY.USER_ID not in data:
+    return False
+  sql = "delete from static_relation where user_a = %d and user_b = %d"
+  try:
+    n = dbhelper.execute(sql%(data[KEY.ID], data[KEY.USER_ID]))
+    if n > 0:
+      return True
+    else:
+      return False
+  except:
+    return False
+
 
