@@ -5,6 +5,7 @@ import random
 import string
 import hashlib
 import MySQLdb
+import ast
 
 
 from dbhelper import dbhelper
@@ -623,5 +624,238 @@ def remove_static_relation(data):
       return False
   except:
     return False
+
+
+'''
+give an evaluation to a user in a help event.
+@params includes: id, evaluater.
+                  user_id, evaluatee.
+                  event_id, indicates the help event.
+                  value, the value of evaluation.
+@return True if successfully evaluate.
+        Flase otherwise.
+'''
+def evaluate_user(data):
+  if KEY.ID not in data or KEY.USER_ID not in data or KEY.EVENT_ID not in data:
+    return False
+  if KEY.VALUE not in data:
+    return False
+  
+  value_list = ast.literal_eval(data[KEY.VALUE])
+  value = 0.0
+  for each_value in value_list:
+    value += each_value
+  list_len = len(value_list)
+  if list_len == 0:
+    list_len = 1
+  value /= list_len
+
+  sql = "replace into evaluation (event_id, from, to, value, time) values (%d, %d, %d, %f, now())"
+  try:
+    dbhelper.execute(sql%(data[KEY.EVENT_ID], data[KEY.ID], data[KEY.USER_ID], value))
+    return True
+  except:
+    return False
+
+
+
+'''
+add a health record of a user into database.
+@params includes id, user's id.
+                 type, type of health indicator.
+                 value, value of some health indicator.
+@return the health record id of the new record.
+        -1 indicates fail.
+'''
+def health_record(data):
+  if KEY.ID not in data or KEY.TYPE not in data or KEY.VALUE not in data:
+    return -1
+  sql = "insert into health (user_id, type, value, time) values (%d, %d, %f, now())"
+  record_id = -1
+  try:
+    record_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.TYPE], data[KEY.VALUE]))
+  except:
+    record_id = -1
+  finally:
+    return record_id
+
+
+'''
+get details of one certain health record.
+@params includes record_id, id of the health record.
+@return details of the health record, contains record id, user id, type, certain value and record time.
+        None indicates fail query.
+'''
+def get_health_record(record_id):
+  sql = "select id, user_id, type, value, time from health where id = %d"
+  record = None
+  try:
+    sql_result = dbhelper.execute_fetchone(sql%(record_id))
+    if sql_result is not None:
+      record = {}
+      record[KEY.HEALTH_ID] = sql_result[0]
+      record[KEY.USER_ID] = sql_result[1]
+      record[KEY.TYPE] = sql_result[2]
+      record[KEY.VALUE] = float(sql_result[3])
+      record[KEY.TIME] = str(sql_result[4])
+  except:
+    record = None
+  finally:
+    return record
+
+
+'''
+get all health records of a user, but at most 100 records.
+@params includes id, user's id.
+@return a list that contain all health records. each element is a json that contains details information of a health record.
+        None indicates fail query.
+'''
+def get_health_records(data):
+  if KEY.ID not in data:
+    return None
+  sql = "select id from health where user_id = %d order by time DESC limit %d"
+  sql_result = None
+  try:
+    sql_result = dbhelper.execute_fetchall(sql%(data[KEY.ID], 100))
+  except:
+    sql_result = None
+  records = None
+  if sql_result is not None:
+    records = []
+    for each_result in sql_result:
+      for each_id in each_result:
+        a_record = get_health_record(each_id)
+        if a_record is not None:
+          records.append(a_record)
+  return records
+
+
+'''
+add an illness record of a user into database.
+@params includes id, user's id.
+                 content, illness detail information.
+@return illness record id.
+        -1 indicates fail.
+'''
+def illness_record(data):
+  if KEY.ID not in data or KEY.CONTENT not in data:
+    return -1
+  sql = "insert into illness (user_id, content, time) values (%d, '%s', now())"
+  illness_id = -1
+  try:
+    illness_id = dbhelper.insert(sql%(data[KEY.ID], data[KEY.CONTENT]))
+  except:
+    illness_id = -1
+  finally:
+    return illness_id
+
+
+'''
+get details of an illness record.
+@params includes record id, indicates which record to be queried.
+@return content of an illness record, includes record's id, user's id, illness content and illness time.
+        None indicates fail query or no such record.
+'''
+def get_illness_record(record_id):
+  sql = "select id, user_id, content, time from illness where id = %d"
+  record = None
+  try:
+    sql_result = dbhelper.execute_fetchone(sql%(record_id))
+    if sql_result is not None:
+      record = {}
+      record[KEY.ILLNESS_ID] = sql_result[0]
+      record[KEY.USER_ID] = sql_result[1]
+      record[KEY.CONTENT] = sql_result[2]
+      record[KEY.TIME] = str(sql_result[3])
+  except:
+    record = None
+  finally:
+    return record
+
+
+'''
+get all illness records of a user, but at most 100 records.
+@params includes: id, user's id.
+@return a list that contain all illness records. each element in the list is a json that is consist of details of an illness record.
+        None indicates fail query.
+'''
+def get_illness_records(data):
+  if KEY.ID not in data:
+    return None
+  sql = "select id from illness where user_id = %d order by time ASC limit %d"
+  sql_result = None
+  records = None
+  try:
+    sql_result = dbhelper.execute_fetchall(sql%(data[KEY.ID], 100))
+  except:
+    sql_result = None
+  if sql_result is not None:
+    records = []
+    for each_result in sql_result:
+      for each_id in each_result:
+        a_record = get_illness_record(each_id)
+        if a_record is not None:
+          records.append(a_record)
+  return records
+
+
+'''
+create a loving bank account. It contains loving bank and credit.
+@params includes user_id, user's id, initial coin number and initial score value.
+@return new bank account id if succeed.
+        -1 if fail.
+'''
+def create_loving_bank(data, init_coin=0, init_score=0):
+  if KEY.ID not in data:
+    return -1
+  sql = "insert into loving_bank (user_id, coin, score, ac_score) values (%d, %d, %d, %d)"
+  try:
+    bank_account_id = dbhelper.insert(sql%(data[KEY.ID], init_coin, init_score, init_score))
+    return bank_account_id
+  except:
+    return -1
+
+
+'''
+user could sign in once a day. Especially, if user has signed in today, this method would return false.
+@params includes user_id. user's id.
+@return True if sign in successfully.
+        False otherwise.
+'''
+def sign_in(data):
+  if KEY.ID not in data:
+    return False
+  if is_sign_in(user_id):
+    return False
+  sql = "insert into sign_in (user_id, time) values (%d, now())"
+  try:
+    sign_in_id = dbhelper.insert(sql%(data[KEY.ID]))
+    if sign_in_id > 0:
+      return True
+    else:
+      return False
+  except:
+    return False
+
+
+'''
+check whether a user has signed in today.
+@params includes user_id. user's id.
+@return True if user has signed in.
+        False otherwise.
+'''
+def is_sign_in(user_id):
+  result = False
+  sql = "select count(*) from sign_in where user_id = %d and to_days(time) = to_days(now())"
+  try:
+    sql_result = dbhelper.execute_fetchone(sql%(user_id))[0]
+    if sql_result > 0:
+      result = True
+    else:
+      result = False
+  except:
+    result = False
+  finally:
+    return result
 
 

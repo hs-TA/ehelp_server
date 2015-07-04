@@ -3,6 +3,7 @@
 # others
 STATUS = 'status'
 OPERATION = 'operation'
+VALUE = 'value'
 
 # account
 ID = 'id'
@@ -46,4 +47,13 @@ COMMENT_ID = 'comment_id'
 AUTHOR_ID = 'author_id'
 AUTHOR = 'author'
 COMMENT_LIST = 'comment_list'
+
+# health
+HEALTH_ID = 'health_id'
+HEALTH_LIST = 'health_list'
+
+# illness
+ILLNESS_ID = 'illness_id'
+ILLNESS_LIST = 'illness_list'
+
 

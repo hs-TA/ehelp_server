@@ -18,6 +18,12 @@ from handler import add_comment_handler
 from handler import remove_comment_handler
 from handler import get_comments_handler
 from handler import user_relation_manage_handler
+from handler import add_health_handler
+from handler import get_health_records_handler
+from handler import add_illness_handler
+from handler import get_illness_records_handler
+from handler import user_relation_manage_handler
+from handler import sign_in_handler
 
 
 
@@ -40,6 +46,12 @@ def main():
       (r"/comment/remove", remove_comment_handler.Remove_Comment_Handler),
       (r"/comment/query", get_comments_handler.Get_Comments_Handler),
       (r"/user/relation_manage", user_relation_manage_handler.User_Relation_Manage_Handler),      
+      (r"/health/upload", add_health_handler.Add_Health_Handler),
+      (r"/health/query", get_health_records_handler.Get_Health_Records_Handler),
+      (r"/illness/upload", add_illness_handler.Add_Illness_Handler),
+      (r"/illness/query", get_illness_records_handler.Get_Illness_Records_Handler),
+      (r"/user/evaluate", user_relation_manage_handler.User_Relation_Manage_Handler),
+      (r"/account/signin", sign_in_handler.Sign_In_Handler),
 
     ])
   http_server = tornado.httpserver.HTTPServer(application)

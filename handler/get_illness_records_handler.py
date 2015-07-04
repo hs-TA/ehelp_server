@@ -10,19 +10,17 @@ from utils import STATUS
 from database import db
 
 
-class Regist_Handler(RequestHandler):
+class Get_Illness_Records_Handler(RequestHandler):
   def post(self):
     params = utils.decode_params(self.request)
-    user_id = db.add_account(params)
+    
     resp = {}
-    if user_id > 0:
-      resp[KEY.STATUS] = STATUS.OK
-      resp[KEY.ACCOUNT] = params[KEY.ACCOUNT]
-      resp[KEY.ID] = user_id
-      resp[KEY.SALT] = db.get_salt(params)
-      bank_account_id = db.create_loving_bank(resp, 20, 0)
-    else:
+    records = db.get_illness_records(params)
+    if records is None:
       resp[KEY.STATUS] = STATUS.ERROR
+    else:
+      resp[KEY.ILLNESS_LIST] = records
+      resp[KEY.STATUS] = STATUS.OK
     
     self.write(json_encode(resp))
 
